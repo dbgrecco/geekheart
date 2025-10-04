@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16
+    container_name: heartgeek-postgres
+    environment:
+      POSTGRES_USER: heartgeek_user
+      POSTGRES_PASSWORD: heartgeek_password
+      POSTGRES_DB: heartgeek_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
