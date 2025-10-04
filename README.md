@@ -10,22 +10,26 @@ HeartGeek é um aplicativo de namoro de nicho para o público geek, nerd, fãs d
 
 - **Backend:** Node.js, Express, TypeScript
 - **Frontend:** React Native (com Expo), TypeScript
-- **Banco de Dados:** PostgreSQL
-- **Ambiente de Desenvolvimento:** Docker (recomendado para o banco de dados)
+- **Banco de Dados:** PostgreSQL com Prisma ORM
+- **Controle de Versão:** Git
 
-## 🚀 Estado Atual
+## 🚀 Progresso Realizado
 
-A estrutura inicial do projeto foi criada e configurada:
+- **[✔️] Backend Configurado:**
+  - Conexão com o banco de dados PostgreSQL via Prisma.
+  - Variáveis de ambiente (`.env`) configuradas para `DATABASE_URL` and `JWT_SECRET`.
+  - Schema do `User` definido e migração do banco de dados executada.
+  - Endpoints de autenticação (`/api/auth/register` e `/api/auth/login`) implementados.
 
-1.  **Diretório Raiz (`/HeartGeek`):** Contém o projeto completo.
-2.  **Backend (`/server`):**
-    - Projeto Node.js inicializado com `npm`.
-    - Dependências instaladas: `express`, `typescript`, `ts-node`, `nodemon`.
-    - Um servidor Express básico foi criado em `src/index.ts`.
-    - Um script `dev` foi adicionado ao `package.json` para iniciar o servidor em modo de desenvolvimento.
-3.  **Frontend (`/client`):**
-    - Projeto React Native com Expo inicializado.
-    - Estrutura de um aplicativo "em branco" pronta para ser desenvolvida.
+- **[✔️] Frontend Estruturado:**
+  - Estrutura de pastas criada (`src`, `screens`, `components`, `navigation`).
+  - React Navigation instalado e configurado para gerenciar as telas.
+  - Telas iniciais de `Login` e `Cadastro` criadas.
+  - Formulário básico da tela de Login implementado.
+
+- **[✔️] Controle de Versão:**
+  - Repositório Git iniciado na raiz do projeto.
+  - Todas as alterações iniciais foram salvas no primeiro commit.
 
 ## ▶️ Como Executar o Ambiente
 
@@ -38,7 +42,7 @@ Para retomar o desenvolvimento, siga estes passos:
 2.  **Execute o Backend:**
     ```bash
     # Navegue até a pasta do servidor
-    cd /home/danielbdof/HeartGeek/server
+    cd server
 
     # Instale as dependências (se for a primeira vez)
     npm install
@@ -51,7 +55,7 @@ Para retomar o desenvolvimento, siga estes passos:
 3.  **Execute o Frontend:**
     ```bash
     # Navegue até a pasta do cliente
-    cd /home/danielbdof/HeartGeek/client
+    cd client
 
     # Instale as dependências (se for a primeira vez)
     npm install
@@ -64,11 +68,7 @@ Para retomar o desenvolvimento, siga estes passos:
 
 ## 🎯 Próximos Passos
 
-O plano para continuar o desenvolvimento é:
-
-1.  **Configurar o Prisma** no projeto do `server` para conectar com o banco de dados PostgreSQL.
-2.  **Definir o Schema** do banco de dados, começando pelo modelo de `User` (usuário).
-3.  **Criar os Endpoints da API** para o sistema de autenticação:
-    - `POST /api/auth/register`
-    - `POST /api/auth/login`
-4.  **Construir as Telas** de Login e Cadastro no aplicativo React Native.
+1.  **Construir o Formulário de Cadastro** na tela `RegisterScreen.js`.
+2.  **Implementar a Lógica de Comunicação com a API** nas telas de Login e Cadastro para autenticar usuários.
+3.  **Gerenciar o Estado de Autenticação** no aplicativo (salvar o token do usuário e navegar para a tela principal após o login).
+4.  **Desenvolver a Tela Principal** do aplicativo (onde os "matches" acontecerão).
