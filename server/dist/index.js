@@ -174,6 +174,12 @@ app.get('/api/me', authMiddleware, async (req, res) => {
                 travelLongitude: true,
                 musicGenres: true,
                 favoriteBands: true,
+                spotifyUrl: true,
+                instagramHandle: true,
+                twitterHandle: true,
+                tiktokHandle: true,
+                facebookUrl: true,
+                showSocials: true,
             },
         });
         res.json(user);
@@ -186,7 +192,7 @@ app.get('/api/me', authMiddleware, async (req, res) => {
 // Rota para atualizar o perfil do usuário logado
 app.put('/api/me', authMiddleware, async (req, res) => {
     const userId = req.userId;
-    const { name, age, bio, pushToken, interests, latitude, longitude, locationName, isTravelMode, travelLocationName, travelLatitude, travelLongitude, musicGenres, favoriteBands, } = req.body;
+    const { name, age, bio, pushToken, interests, latitude, longitude, locationName, isTravelMode, travelLocationName, travelLatitude, travelLongitude, musicGenres, favoriteBands, spotifyUrl, instagramHandle, twitterHandle, tiktokHandle, facebookUrl, showSocials, } = req.body;
     try {
         const dataToUpdate = {};
         if (name !== undefined)
@@ -217,6 +223,18 @@ app.put('/api/me', authMiddleware, async (req, res) => {
             dataToUpdate.musicGenres = musicGenres;
         if (Array.isArray(favoriteBands))
             dataToUpdate.favoriteBands = favoriteBands;
+        if (spotifyUrl !== undefined)
+            dataToUpdate.spotifyUrl = spotifyUrl;
+        if (instagramHandle !== undefined)
+            dataToUpdate.instagramHandle = instagramHandle;
+        if (twitterHandle !== undefined)
+            dataToUpdate.twitterHandle = twitterHandle;
+        if (tiktokHandle !== undefined)
+            dataToUpdate.tiktokHandle = tiktokHandle;
+        if (facebookUrl !== undefined)
+            dataToUpdate.facebookUrl = facebookUrl;
+        if (showSocials !== undefined)
+            dataToUpdate.showSocials = Boolean(showSocials);
         const updatedUser = await prisma.user.update({
             where: { id: userId },
             data: dataToUpdate,
@@ -239,6 +257,12 @@ app.put('/api/me', authMiddleware, async (req, res) => {
                 travelLongitude: true,
                 musicGenres: true,
                 favoriteBands: true,
+                spotifyUrl: true,
+                instagramHandle: true,
+                twitterHandle: true,
+                tiktokHandle: true,
+                facebookUrl: true,
+                showSocials: true,
             },
         });
         res.json(updatedUser);
@@ -295,6 +319,12 @@ app.get('/api/profiles', authMiddleware, async (req, res) => {
                 travelLocationName: true,
                 musicGenres: true,
                 favoriteBands: true,
+                spotifyUrl: true,
+                instagramHandle: true,
+                twitterHandle: true,
+                tiktokHandle: true,
+                facebookUrl: true,
+                showSocials: true,
             },
         });
         const profilesWithCompatibility = users.map((u) => {

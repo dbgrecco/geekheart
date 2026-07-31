@@ -20,6 +20,12 @@ export interface User {
   travelLongitude?: number | null;
   musicGenres?: string[];
   favoriteBands?: string[];
+  spotifyUrl?: string | null;
+  instagramHandle?: string | null;
+  twitterHandle?: string | null;
+  tiktokHandle?: string | null;
+  facebookUrl?: string | null;
+  showSocials?: boolean;
   distanceKm?: number | null;
 }
 

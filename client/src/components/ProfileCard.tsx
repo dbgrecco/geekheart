@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, Dimensions, TouchableOpacity, Linking } from 'react-native';
 import { User } from '../types';
 import { Colors } from '../theme/colors';
 import { getImageUrl } from '../config/api';
+import { Ionicons } from '@expo/vector-icons';
 
 interface ProfileCardProps {
   profile: User;
@@ -21,6 +22,28 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
     : profile.locationName
     ? `📍 ${profile.locationName}`
     : null;
+
+  const openSocialLink = (type: string, handleOrUrl?: string | null) => {
+    if (!handleOrUrl) return;
+    let url = handleOrUrl;
+    if (type === 'instagram') {
+      const clean = handleOrUrl.replace('@', '').trim();
+      url = `https://instagram.com/${clean}`;
+    } else if (type === 'twitter') {
+      const clean = handleOrUrl.replace('@', '').trim();
+      url = `https://x.com/${clean}`;
+    } else if (type === 'tiktok') {
+      const clean = handleOrUrl.replace('@', '').trim();
+      url = `https://tiktok.com/@${clean}`;
+    } else if (type === 'spotify' && !handleOrUrl.startsWith('http')) {
+      url = `https://open.spotify.com/user/${handleOrUrl.trim()}`;
+    } else if (type === 'facebook' && !handleOrUrl.startsWith('http')) {
+      url = `https://facebook.com/${handleOrUrl.trim()}`;
+    }
+    Linking.openURL(url).catch(() => {});
+  };
+
+  const showSocials = profile.showSocials !== false;
 
   return (
     <View style={styles.card}>
@@ -58,6 +81,41 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
         </View>
 
         {profile.bio ? <Text style={styles.bio} numberOfLines={2}>{profile.bio}</Text> : null}
+
+        {/* Barra de Redes Sociais Conectadas */}
+        {showSocials && (
+          <View style={styles.socialsRow}>
+            {profile.spotifyUrl ? (
+              <TouchableOpacity style={[styles.socialIconBtn, { borderColor: '#1DB954' }]} onPress={() => openSocialLink('spotify', profile.spotifyUrl)}>
+                <Ionicons name="musical-note" size={16} color="#1DB954" />
+              </TouchableOpacity>
+            ) : null}
+
+            {profile.instagramHandle ? (
+              <TouchableOpacity style={[styles.socialIconBtn, { borderColor: '#E1306C' }]} onPress={() => openSocialLink('instagram', profile.instagramHandle)}>
+                <Ionicons name="logo-instagram" size={16} color="#E1306C" />
+              </TouchableOpacity>
+            ) : null}
+
+            {profile.twitterHandle ? (
+              <TouchableOpacity style={[styles.socialIconBtn, { borderColor: '#1DA1F2' }]} onPress={() => openSocialLink('twitter', profile.twitterHandle)}>
+                <Ionicons name="logo-twitter" size={16} color="#1DA1F2" />
+              </TouchableOpacity>
+            ) : null}
+
+            {profile.tiktokHandle ? (
+              <TouchableOpacity style={[styles.socialIconBtn, { borderColor: '#00F0FF' }]} onPress={() => openSocialLink('tiktok', profile.tiktokHandle)}>
+                <Ionicons name="musical-notes-outline" size={16} color="#00F0FF" />
+              </TouchableOpacity>
+            ) : null}
+
+            {profile.facebookUrl ? (
+              <TouchableOpacity style={[styles.socialIconBtn, { borderColor: '#1877F2' }]} onPress={() => openSocialLink('facebook', profile.facebookUrl)}>
+                <Ionicons name="logo-facebook" size={16} color="#1877F2" />
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        )}
 
         {/* Interesses Geek */}
         {profile.interests && profile.interests.length > 0 && (
@@ -194,6 +252,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 19,
     marginBottom: 10,
+  },
+  socialsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+  },
+  socialIconBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: Colors.surfaceLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
   },
   tagsContainer: {
     flexDirection: 'row',

@@ -30,6 +30,15 @@ const EditProfileScreen = ({ navigation }: any) => {
   const [isTravelMode, setIsTravelMode] = useState<boolean>(user?.isTravelMode || false);
   const [travelLocationName, setTravelLocationName] = useState<string>(user?.travelLocationName || '');
   const [locationName, setLocationName] = useState<string>(user?.locationName || 'São Paulo, Brasil');
+  
+  // Redes Sociais
+  const [spotifyUrl, setSpotifyUrl] = useState<string>(user?.spotifyUrl || '');
+  const [instagramHandle, setInstagramHandle] = useState<string>(user?.instagramHandle || '');
+  const [twitterHandle, setTwitterHandle] = useState<string>(user?.twitterHandle || '');
+  const [tiktokHandle, setTiktokHandle] = useState<string>(user?.tiktokHandle || '');
+  const [facebookUrl, setFacebookUrl] = useState<string>(user?.facebookUrl || '');
+  const [showSocials, setShowSocials] = useState<boolean>(user?.showSocials !== false);
+
   const [imageUri, setImageUri] = useState<string | null>(getImageUrl(user?.image));
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -128,6 +137,12 @@ const EditProfileScreen = ({ navigation }: any) => {
             isTravelMode,
             travelLocationName,
             locationName,
+            spotifyUrl,
+            instagramHandle,
+            twitterHandle,
+            tiktokHandle,
+            facebookUrl,
+            showSocials,
           }),
         },
         token
@@ -225,6 +240,77 @@ const EditProfileScreen = ({ navigation }: any) => {
               />
             </View>
           )}
+        </View>
+
+        {/* Redes Sociais & Mídia */}
+        <View style={styles.socialsSection}>
+          <View style={styles.socialsHeaderRow}>
+            <Text style={styles.sectionTitle}>Redes Sociais & Mídia (Opcional)</Text>
+            <View style={styles.toggleRow}>
+              <Text style={styles.toggleLabel}>Exibir no Perfil</Text>
+              <Switch
+                value={showSocials}
+                onValueChange={setShowSocials}
+                trackColor={{ false: Colors.border, true: Colors.secondary }}
+                thumbColor={showSocials ? Colors.primary : '#FFF'}
+              />
+            </View>
+          </View>
+
+          <View style={styles.socialInputContainer}>
+            <Ionicons name="musical-note" size={20} color="#1DB954" style={styles.socialInputIcon} />
+            <TextInput
+              style={styles.socialInput}
+              value={spotifyUrl}
+              onChangeText={setSpotifyUrl}
+              placeholder="Spotify (URL ou Username)"
+              placeholderTextColor={Colors.textMuted}
+            />
+          </View>
+
+          <View style={styles.socialInputContainer}>
+            <Ionicons name="logo-instagram" size={20} color="#E1306C" style={styles.socialInputIcon} />
+            <TextInput
+              style={styles.socialInput}
+              value={instagramHandle}
+              onChangeText={setInstagramHandle}
+              placeholder="Instagram (@username)"
+              placeholderTextColor={Colors.textMuted}
+            />
+          </View>
+
+          <View style={styles.socialInputContainer}>
+            <Ionicons name="logo-twitter" size={20} color="#1DA1F2" style={styles.socialInputIcon} />
+            <TextInput
+              style={styles.socialInput}
+              value={twitterHandle}
+              onChangeText={setTwitterHandle}
+              placeholder="Twitter / X (@username)"
+              placeholderTextColor={Colors.textMuted}
+            />
+          </View>
+
+          <View style={styles.socialInputContainer}>
+            <Ionicons name="musical-notes-outline" size={20} color="#00F0FF" style={styles.socialInputIcon} />
+            <TextInput
+              style={styles.socialInput}
+              value={tiktokHandle}
+              onChangeText={setTiktokHandle}
+              placeholder="TikTok (@username)"
+              placeholderTextColor={Colors.textMuted}
+            />
+          </View>
+
+          <View style={styles.socialInputContainer}>
+            <Ionicons name="logo-facebook" size={20} color="#1877F2" style={styles.socialInputIcon} />
+            <TextInput
+              style={styles.socialInput}
+              value={facebookUrl}
+              onChangeText={setFacebookUrl}
+              placeholder="Facebook (Link ou Username)"
+              placeholderTextColor={Colors.textMuted}
+            />
+          </View>
         </View>
 
         <View style={styles.fieldContainer}>
@@ -379,6 +465,48 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
+  socialsSection: {
+    backgroundColor: Colors.surface,
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginBottom: 20,
+  },
+  socialsHeaderRow: {
+    flexDirection: 'column',
+    marginBottom: 14,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 8,
+  },
+  toggleLabel: {
+    color: Colors.textMuted,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  socialInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceLight,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    paddingHorizontal: 12,
+    height: 48,
+    marginBottom: 10,
+  },
+  socialInputIcon: {
+    marginRight: 10,
+  },
+  socialInput: {
+    flex: 1,
+    color: Colors.text,
+    fontSize: 14,
+  },
   textArea: {
     height: 100,
     paddingTop: 14,
@@ -388,8 +516,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: Colors.text,
-    marginTop: 10,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   interestsGrid: {
     flexDirection: 'row',

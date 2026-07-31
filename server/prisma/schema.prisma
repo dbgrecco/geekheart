@@ -32,6 +32,12 @@ model User {
   travelLongitude    Float?
   musicGenres        String[]      @default([])
   favoriteBands      String[]      @default([])
+  spotifyUrl         String?
+  instagramHandle    String?
+  twitterHandle      String?
+  tiktokHandle       String?
+  facebookUrl        String?
+  showSocials        Boolean       @default(true)
   isOnline           Boolean       @default(false)
   lastSeen           DateTime      @default(now())
   pushToken          String?       @unique

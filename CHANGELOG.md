@@ -1,8 +1,13 @@
 # CHANGELOG
 
-## 2026-07-31 - Versão Premium + Geolocalização & Modo Música
+## 2026-07-31 - Versão Premium + Redes Sociais, Geolocalização & Modo Música
 
 ### Added
+- **Conexão com Redes Sociais & Mídia (Spotify, Instagram, Twitter/X, TikTok, Facebook):**
+  - Campos opcionais para inclusão de links do Spotify, Instagram, Twitter/X, TikTok e Facebook.
+  - Chave de controle de privacidade **"Exibir Redes Sociais no Perfil"** (`showSocials`).
+  - Badges e ícones interativos com atalho direto nos cartões de perfil do radar e tela de perfil.
+
 - **Geolocalização Global & Modo Viagem (Passport Mode):**
   - Registro de localização GPS e cálculo de distância em km (`distanceKm`) via fórmula de Haversine.
   - Recurso **Modo Viagem (Passport Mode)** para explorar candidatos em qualquer cidade do mundo (ex: *Tóquio, Londes, Berlim, Nova York*).

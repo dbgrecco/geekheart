@@ -8,6 +8,7 @@ import {
   ScrollView,
   SafeAreaView,
   StatusBar,
+  Linking,
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { Colors } from '../theme/colors';
@@ -18,6 +19,23 @@ const ProfileScreen = ({ navigation }: any) => {
   const { user, logout } = useAuth();
 
   const imageUrl = getImageUrl(user?.image) || 'https://via.placeholder.com/200';
+
+  const openSocial = (type: string, handleOrUrl?: string | null) => {
+    if (!handleOrUrl) return;
+    let url = handleOrUrl;
+    if (type === 'instagram') {
+      url = `https://instagram.com/${handleOrUrl.replace('@', '').trim()}`;
+    } else if (type === 'twitter') {
+      url = `https://x.com/${handleOrUrl.replace('@', '').trim()}`;
+    } else if (type === 'tiktok') {
+      url = `https://tiktok.com/@${handleOrUrl.replace('@', '').trim()}`;
+    } else if (type === 'spotify' && !handleOrUrl.startsWith('http')) {
+      url = `https://open.spotify.com/user/${handleOrUrl.trim()}`;
+    } else if (type === 'facebook' && !handleOrUrl.startsWith('http')) {
+      url = `https://facebook.com/${handleOrUrl.trim()}`;
+    }
+    Linking.openURL(url).catch(() => {});
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -52,18 +70,54 @@ const ProfileScreen = ({ navigation }: any) => {
           </View>
         </View>
 
-        {/* Estatísticas do Jogador */}
-        <View style={styles.statsRow}>
-          <View style={styles.statCard}>
-            <Ionicons name="flash" size={24} color={Colors.secondary} />
-            <Text style={styles.statValue}>Geek</Text>
-            <Text style={styles.statLabel}>Level 99</Text>
+        {/* Redes Sociais Conectadas */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>Conexões Sociais</Text>
+            <Text style={styles.privacyTag}>
+              {user?.showSocials !== false ? '🌐 Visível no Perfil' : '🔒 Privado'}
+            </Text>
           </View>
 
-          <View style={styles.statCard}>
-            <Ionicons name="musical-notes" size={24} color={Colors.primary} />
-            <Text style={styles.statValue}>{user?.musicGenres?.length || 0}</Text>
-            <Text style={styles.statLabel}>Estilos Musicais</Text>
+          <View style={styles.socialsGrid}>
+            {user?.spotifyUrl ? (
+              <TouchableOpacity style={[styles.socialPill, { borderColor: '#1DB954' }]} onPress={() => openSocial('spotify', user.spotifyUrl)}>
+                <Ionicons name="musical-note" size={18} color="#1DB954" style={{ marginRight: 6 }} />
+                <Text style={styles.socialPillText}>Spotify</Text>
+              </TouchableOpacity>
+            ) : null}
+
+            {user?.instagramHandle ? (
+              <TouchableOpacity style={[styles.socialPill, { borderColor: '#E1306C' }]} onPress={() => openSocial('instagram', user.instagramHandle)}>
+                <Ionicons name="logo-instagram" size={18} color="#E1306C" style={{ marginRight: 6 }} />
+                <Text style={styles.socialPillText}>{user.instagramHandle}</Text>
+              </TouchableOpacity>
+            ) : null}
+
+            {user?.twitterHandle ? (
+              <TouchableOpacity style={[styles.socialPill, { borderColor: '#1DA1F2' }]} onPress={() => openSocial('twitter', user.twitterHandle)}>
+                <Ionicons name="logo-twitter" size={18} color="#1DA1F2" style={{ marginRight: 6 }} />
+                <Text style={styles.socialPillText}>{user.twitterHandle}</Text>
+              </TouchableOpacity>
+            ) : null}
+
+            {user?.tiktokHandle ? (
+              <TouchableOpacity style={[styles.socialPill, { borderColor: '#00F0FF' }]} onPress={() => openSocial('tiktok', user.tiktokHandle)}>
+                <Ionicons name="musical-notes-outline" size={18} color="#00F0FF" style={{ marginRight: 6 }} />
+                <Text style={styles.socialPillText}>{user.tiktokHandle}</Text>
+              </TouchableOpacity>
+            ) : null}
+
+            {user?.facebookUrl ? (
+              <TouchableOpacity style={[styles.socialPill, { borderColor: '#1877F2' }]} onPress={() => openSocial('facebook', user.facebookUrl)}>
+                <Ionicons name="logo-facebook" size={18} color="#1877F2" style={{ marginRight: 6 }} />
+                <Text style={styles.socialPillText}>Facebook</Text>
+              </TouchableOpacity>
+            ) : null}
+
+            {!user?.spotifyUrl && !user?.instagramHandle && !user?.twitterHandle && !user?.tiktokHandle && !user?.facebookUrl && (
+              <Text style={styles.emptyText}>Nenhuma rede social conectada. Toque em Editar para vincular!</Text>
+            )}
           </View>
         </View>
 
@@ -110,7 +164,7 @@ const ProfileScreen = ({ navigation }: any) => {
         {/* Ações */}
         <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditProfile')}>
           <Ionicons name="create-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
-          <Text style={styles.editButtonText}>Editar Perfil & Preferências</Text>
+          <Text style={styles.editButtonText}>Editar Perfil & Conexões</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.logoutButton} onPress={logout}>
@@ -181,32 +235,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 20,
-    width: '100%',
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: Colors.surface,
-    borderRadius: 20,
-    padding: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  statValue: {
-    color: Colors.text,
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 6,
-  },
-  statLabel: {
-    color: Colors.textMuted,
-    fontSize: 12,
-    marginTop: 2,
-  },
   sectionCard: {
     width: '100%',
     backgroundColor: Colors.surface,
@@ -216,16 +244,50 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   sectionTitle: {
     fontSize: 15,
     fontWeight: '700',
     color: Colors.text,
-    marginBottom: 10,
+  },
+  privacyTag: {
+    fontSize: 12,
+    color: Colors.secondary,
+    fontWeight: '600',
+  },
+  socialsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  socialPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceLight,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  socialPillText: {
+    color: Colors.text,
+    fontSize: 13,
+    fontWeight: '600',
   },
   bioText: {
     fontSize: 14,
     color: Colors.textMuted,
     lineHeight: 20,
+  },
+  emptyText: {
+    fontSize: 13,
+    color: Colors.textMuted,
+    fontStyle: 'italic',
   },
   emptyInterestsText: {
     fontSize: 13,

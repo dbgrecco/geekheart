@@ -205,6 +205,12 @@ app.get('/api/me', authMiddleware, async (req: AuthRequest, res: Response) => {
         travelLongitude: true,
         musicGenres: true,
         favoriteBands: true,
+        spotifyUrl: true,
+        instagramHandle: true,
+        twitterHandle: true,
+        tiktokHandle: true,
+        facebookUrl: true,
+        showSocials: true,
       },
     });
     res.json(user);
@@ -232,6 +238,12 @@ app.put('/api/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     travelLongitude,
     musicGenres,
     favoriteBands,
+    spotifyUrl,
+    instagramHandle,
+    twitterHandle,
+    tiktokHandle,
+    facebookUrl,
+    showSocials,
   } = req.body;
 
   try {
@@ -250,6 +262,12 @@ app.put('/api/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     if (travelLongitude !== undefined) dataToUpdate.travelLongitude = travelLongitude ? Number(travelLongitude) : null;
     if (Array.isArray(musicGenres)) dataToUpdate.musicGenres = musicGenres;
     if (Array.isArray(favoriteBands)) dataToUpdate.favoriteBands = favoriteBands;
+    if (spotifyUrl !== undefined) dataToUpdate.spotifyUrl = spotifyUrl;
+    if (instagramHandle !== undefined) dataToUpdate.instagramHandle = instagramHandle;
+    if (twitterHandle !== undefined) dataToUpdate.twitterHandle = twitterHandle;
+    if (tiktokHandle !== undefined) dataToUpdate.tiktokHandle = tiktokHandle;
+    if (facebookUrl !== undefined) dataToUpdate.facebookUrl = facebookUrl;
+    if (showSocials !== undefined) dataToUpdate.showSocials = Boolean(showSocials);
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
@@ -273,6 +291,12 @@ app.put('/api/me', authMiddleware, async (req: AuthRequest, res: Response) => {
         travelLongitude: true,
         musicGenres: true,
         favoriteBands: true,
+        spotifyUrl: true,
+        instagramHandle: true,
+        twitterHandle: true,
+        tiktokHandle: true,
+        facebookUrl: true,
+        showSocials: true,
       },
     });
     res.json(updatedUser);
@@ -334,6 +358,12 @@ app.get('/api/profiles', authMiddleware, async (req: AuthRequest, res: Response)
         travelLocationName: true,
         musicGenres: true,
         favoriteBands: true,
+        spotifyUrl: true,
+        instagramHandle: true,
+        twitterHandle: true,
+        tiktokHandle: true,
+        facebookUrl: true,
+        showSocials: true,
       },
     });
 
