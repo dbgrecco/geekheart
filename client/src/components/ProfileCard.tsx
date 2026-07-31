@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, Image, Dimensions, TouchableOpacity, Linking } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, Image, Dimensions, TouchableOpacity, Linking, TouchableWithoutFeedback } from 'react-native';
 import { User } from '../types';
 import { Colors } from '../theme/colors';
 import { getImageUrl } from '../config/api';
@@ -9,11 +9,42 @@ interface ProfileCardProps {
   profile: User;
 }
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
-  const imageUrl = getImageUrl(profile.image) || 'https://via.placeholder.com/600x800/1A1829/FF2A85?text=HeartGeek';
+  const [photoIndex, setPhotoIndex] = useState(0);
+
+  // Lista de fotos: combina foto principal + fotos da galeria
+  const allPhotos: string[] = [];
+  if (profile.photos && profile.photos.length > 0) {
+    profile.photos.forEach(p => {
+      const url = getImageUrl(p.url);
+      if (url) allPhotos.push(url);
+    });
+  }
+  if (allPhotos.length === 0) {
+    const mainUrl = getImageUrl(profile.image) || 'https://via.placeholder.com/600x800/1A1829/FF2A85?text=HeartGeek';
+    allPhotos.push(mainUrl);
+  }
+
+  const currentPhotoUrl = allPhotos[photoIndex] || allPhotos[0];
   const compatibility = profile.compatibility || 75;
+
+  const handleNextPhoto = () => {
+    if (photoIndex < allPhotos.length - 1) {
+      setPhotoIndex(photoIndex + 1);
+    } else {
+      setPhotoIndex(0);
+    }
+  };
+
+  const handlePrevPhoto = () => {
+    if (photoIndex > 0) {
+      setPhotoIndex(photoIndex - 1);
+    } else {
+      setPhotoIndex(allPhotos.length - 1);
+    }
+  };
 
   const locationLabel = profile.isTravelMode
     ? `✈️ ${profile.travelLocationName || 'Modo Viagem'}`
@@ -37,6 +68,8 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
       url = `https://tiktok.com/@${clean}`;
     } else if (type === 'spotify' && !handleOrUrl.startsWith('http')) {
       url = `https://open.spotify.com/user/${handleOrUrl.trim()}`;
+    } else if (type === 'steam' && !handleOrUrl.startsWith('http')) {
+      url = `https://steamcommunity.com/id/${handleOrUrl.trim()}`;
     } else if (type === 'facebook' && !handleOrUrl.startsWith('http')) {
       url = `https://facebook.com/${handleOrUrl.trim()}`;
     }
@@ -47,16 +80,45 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
 
   return (
     <View style={styles.card}>
-      <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
+      <Image source={{ uri: currentPhotoUrl }} style={styles.image} resizeMode="cover" />
 
       {/* Overlay com degradê escuro */}
       <View style={styles.gradientOverlay} />
 
+      {/* Áreas de toque para navegar fotos */}
+      {allPhotos.length > 1 && (
+        <View style={styles.touchNavigationOverlay} pointerEvents="box-none">
+          <TouchableOpacity style={styles.touchSide} onPress={handlePrevPhoto} activeOpacity={0.9} />
+          <TouchableOpacity style={styles.touchSide} onPress={handleNextPhoto} activeOpacity={0.9} />
+        </View>
+      )}
+
+      {/* Indicadores de Fotos Superior */}
+      {allPhotos.length > 1 && (
+        <View style={styles.photoIndicatorsRow}>
+          {allPhotos.map((_, idx) => (
+            <View
+              key={`ph-${idx}`}
+              style={[
+                styles.photoIndicatorBar,
+                idx === photoIndex ? styles.photoIndicatorActive : styles.photoIndicatorInactive,
+              ]}
+            />
+          ))}
+        </View>
+      )}
+
       {/* Badges Superiores */}
       <View style={styles.topBadgesRow}>
         <View style={styles.compatibilityBadge}>
-          <Text style={styles.compatibilityText}>⚡ {compatibility}% GEEK MATCH</Text>
+          <Text style={styles.compatibilityText}>⚡ {compatibility}% COMPATIBILIDADE</Text>
         </View>
+
+        {profile.rpgClass && (
+          <View style={styles.rpgBadge}>
+            <Text style={styles.rpgText}>🛡️ {profile.rpgClass}</Text>
+          </View>
+        )}
 
         {locationLabel && (
           <View style={styles.distanceBadge}>
@@ -85,6 +147,12 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
         {/* Barra de Redes Sociais Conectadas */}
         {showSocials && (
           <View style={styles.socialsRow}>
+            {profile.steamId ? (
+              <TouchableOpacity style={[styles.socialIconBtn, { borderColor: '#171A21' }]} onPress={() => openSocialLink('steam', profile.steamId)}>
+                <Ionicons name="game-controller" size={16} color="#00F0FF" />
+              </TouchableOpacity>
+            ) : null}
+
             {profile.spotifyUrl ? (
               <TouchableOpacity style={[styles.socialIconBtn, { borderColor: '#1DB954' }]} onPress={() => openSocialLink('spotify', profile.spotifyUrl)}>
                 <Ionicons name="musical-note" size={16} color="#1DB954" />
@@ -102,42 +170,35 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
                 <Ionicons name="logo-twitter" size={16} color="#1DA1F2" />
               </TouchableOpacity>
             ) : null}
-
-            {profile.tiktokHandle ? (
-              <TouchableOpacity style={[styles.socialIconBtn, { borderColor: '#00F0FF' }]} onPress={() => openSocialLink('tiktok', profile.tiktokHandle)}>
-                <Ionicons name="musical-notes-outline" size={16} color="#00F0FF" />
-              </TouchableOpacity>
-            ) : null}
-
-            {profile.facebookUrl ? (
-              <TouchableOpacity style={[styles.socialIconBtn, { borderColor: '#1877F2' }]} onPress={() => openSocialLink('facebook', profile.facebookUrl)}>
-                <Ionicons name="logo-facebook" size={16} color="#1877F2" />
-              </TouchableOpacity>
-            ) : null}
           </View>
         )}
 
-        {/* Interesses Geek */}
-        {profile.interests && profile.interests.length > 0 && (
-          <View style={styles.tagsContainer}>
-            {profile.interests.slice(0, 3).map((interest, idx) => (
+        {/* Interesses & Jogos Geek */}
+        <View style={styles.tagsContainer}>
+          {profile.favoriteGames && profile.favoriteGames.length > 0 && (
+            profile.favoriteGames.slice(0, 2).map((game, idx) => (
+              <View key={`g-${idx}`} style={[styles.chip, styles.gameChip]}>
+                <Text style={[styles.chipText, styles.gameChipText]}>🎮 {game}</Text>
+              </View>
+            ))
+          )}
+
+          {profile.favoriteAnimes && profile.favoriteAnimes.length > 0 && (
+            profile.favoriteAnimes.slice(0, 2).map((anime, idx) => (
+              <View key={`a-${idx}`} style={[styles.chip, styles.animeChip]}>
+                <Text style={[styles.chipText, styles.animeChipText]}>🍥 {anime}</Text>
+              </View>
+            ))
+          )}
+
+          {profile.interests && profile.interests.length > 0 && (
+            profile.interests.slice(0, 2).map((interest, idx) => (
               <View key={`int-${idx}`} style={styles.chip}>
                 <Text style={styles.chipText}>{interest}</Text>
               </View>
-            ))}
-          </View>
-        )}
-
-        {/* Vertentes Musicais & Trilhas */}
-        {profile.musicGenres && profile.musicGenres.length > 0 && (
-          <View style={styles.tagsContainer}>
-            {profile.musicGenres.slice(0, 3).map((genre, idx) => (
-              <View key={`mus-${idx}`} style={[styles.chip, styles.musicChip]}>
-                <Text style={[styles.chipText, styles.musicChipText]}>{genre}</Text>
-              </View>
-            ))}
-          </View>
-        )}
+            ))
+          )}
+        </View>
       </View>
     </View>
   );
@@ -167,9 +228,40 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(15, 14, 23, 0.45)',
   },
+  touchNavigationOverlay: {
+    position: 'absolute',
+    top: 50,
+    left: 0,
+    right: 0,
+    bottom: 180,
+    flexDirection: 'row',
+  },
+  touchSide: {
+    flex: 1,
+  },
+  photoIndicatorsRow: {
+    position: 'absolute',
+    top: 10,
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    gap: 4,
+    zIndex: 10,
+  },
+  photoIndicatorBar: {
+    flex: 1,
+    height: 3,
+    borderRadius: 2,
+  },
+  photoIndicatorActive: {
+    backgroundColor: Colors.secondary,
+  },
+  photoIndicatorInactive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+  },
   topBadgesRow: {
     position: 'absolute',
-    top: 16,
+    top: 24,
     left: 16,
     right: 16,
     flexDirection: 'row',
@@ -188,6 +280,19 @@ const styles = StyleSheet.create({
   },
   compatibilityText: {
     color: Colors.secondary,
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  rpgBadge: {
+    backgroundColor: 'rgba(123, 44, 191, 0.25)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: Colors.accent,
+  },
+  rpgText: {
+    color: '#D8B4FE',
     fontWeight: 'bold',
     fontSize: 12,
   },
@@ -286,11 +391,18 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
   },
-  musicChip: {
-    borderColor: 'rgba(0, 240, 255, 0.4)',
-    backgroundColor: 'rgba(0, 240, 255, 0.08)',
+  gameChip: {
+    borderColor: 'rgba(255, 42, 133, 0.4)',
+    backgroundColor: 'rgba(255, 42, 133, 0.1)',
   },
-  musicChipText: {
+  gameChipText: {
+    color: Colors.primary,
+  },
+  animeChip: {
+    borderColor: 'rgba(0, 240, 255, 0.4)',
+    backgroundColor: 'rgba(0, 240, 255, 0.1)',
+  },
+  animeChipText: {
     color: Colors.secondary,
   },
 });

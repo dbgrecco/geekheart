@@ -9,6 +9,7 @@ import {
   StatusBar,
 } from 'react-native';
 import Swiper from 'react-native-deck-swiper';
+import * as Haptics from 'expo-haptics';
 import { useAuth } from '../context/AuthContext';
 import ProfileCard from '../components/ProfileCard';
 import MatchModal from '../components/MatchModal';
@@ -49,7 +50,7 @@ const HomeScreen = ({ navigation }: any) => {
     }
   }, [token]);
 
-  const sendInteraction = async (cardIndex: number, liked: boolean) => {
+  const sendInteraction = async (cardIndex: number, liked: boolean, isSuperLike = false) => {
     const targetProfile = profiles[cardIndex];
     if (!targetProfile) return;
 
@@ -58,12 +59,13 @@ const HomeScreen = ({ navigation }: any) => {
         '/api/interactions',
         {
           method: 'POST',
-          body: JSON.stringify({ targetUserId: targetProfile.id, liked }),
+          body: JSON.stringify({ targetUserId: targetProfile.id, liked, isSuperLike }),
         },
         token
       );
 
       if (data.match) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
         setMatchedUser(data.targetUser || targetProfile);
         setMatchId(data.matchId);
         setMatchModalVisible(true);
@@ -74,11 +76,20 @@ const HomeScreen = ({ navigation }: any) => {
   };
 
   const handleSwipeRight = (cardIndex: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     sendInteraction(cardIndex, true);
   };
 
   const handleSwipeLeft = (cardIndex: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     sendInteraction(cardIndex, false);
+  };
+
+  const handleCriticalHit = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+    if (swiperRef.current) {
+      swiperRef.current.swipeRight();
+    }
   };
 
   const handleSendMessage = (targetMatchId: string, partner: User) => {
@@ -177,6 +188,13 @@ const HomeScreen = ({ navigation }: any) => {
               onPress={() => swiperRef.current?.swipeLeft()}
             >
               <Ionicons name="close" size={30} color={Colors.danger} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionBtn, styles.superLikeBtn]}
+              onPress={handleCriticalHit}
+            >
+              <Ionicons name="flash" size={26} color="#FFE600" />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -335,6 +353,13 @@ const styles = StyleSheet.create({
   },
   dislikeBtn: {
     borderColor: 'rgba(255, 23, 68, 0.4)',
+  },
+  superLikeBtn: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    borderColor: 'rgba(255, 230, 0, 0.6)',
+    backgroundColor: 'rgba(255, 230, 0, 0.1)',
   },
   likeBtn: {
     width: 72,

@@ -14,10 +14,19 @@ import {
   Switch,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
 import { useAuth } from '../context/AuthContext';
 import { Colors, GEEK_INTERESTS, MUSIC_GENRES } from '../theme/colors';
 import { apiFetch, getImageUrl, API_BASE_URL } from '../config/api';
 import { Ionicons } from '@expo/vector-icons';
+
+const GEEK_PASSPORT_PRESETS = [
+  { label: '🎌 Tóquio (Akihabara), Japão', name: 'Tóquio, Japão', lat: 35.6762, lon: 139.6503 },
+  { label: '🦸‍♂️ San Diego (Comic-Con), EUA', name: 'San Diego, EUA', lat: 32.7157, lon: -117.1611 },
+  { label: '🗽 Nova York, EUA', name: 'Nova York, EUA', lat: 40.7128, lon: -74.0060 },
+  { label: '🎡 Londres, Reino Unido', name: 'Londres, Reino Unido', lat: 51.5074, lon: -0.1278 },
+  { label: '🎮 Seul (E-sports), Coreia', name: 'Seul, Coreia do Sul', lat: 37.5665, lon: 126.9780 },
+];
 
 const EditProfileScreen = ({ navigation }: any) => {
   const { user, token, updateUser } = useAuth();
@@ -29,7 +38,13 @@ const EditProfileScreen = ({ navigation }: any) => {
   const [selectedMusic, setSelectedMusic] = useState<string[]>(user?.musicGenres || []);
   const [isTravelMode, setIsTravelMode] = useState<boolean>(user?.isTravelMode || false);
   const [travelLocationName, setTravelLocationName] = useState<string>(user?.travelLocationName || '');
+  const [travelLatitude, setTravelLatitude] = useState<number | null>(user?.travelLatitude || null);
+  const [travelLongitude, setTravelLongitude] = useState<number | null>(user?.travelLongitude || null);
+
   const [locationName, setLocationName] = useState<string>(user?.locationName || 'São Paulo, Brasil');
+  const [latitude, setLatitude] = useState<number | null>(user?.latitude || null);
+  const [longitude, setLongitude] = useState<number | null>(user?.longitude || null);
+  const [detectingGps, setDetectingGps] = useState(false);
   
   // Redes Sociais
   const [spotifyUrl, setSpotifyUrl] = useState<string>(user?.spotifyUrl || '');
@@ -42,6 +57,64 @@ const EditProfileScreen = ({ navigation }: any) => {
   const [imageUri, setImageUri] = useState<string | null>(getImageUrl(user?.image));
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+
+  const [rpgClass, setRpgClass] = useState<string>(user?.rpgClass || '');
+  const [favoriteGamesText, setFavoriteGamesText] = useState<string>(user?.favoriteGames?.join(', ') || '');
+  const [favoriteAnimesText, setFavoriteAnimesText] = useState<string>(user?.favoriteAnimes?.join(', ') || '');
+  const [favoriteConsolesText, setFavoriteConsolesText] = useState<string>(user?.favoriteConsoles?.join(', ') || '');
+  const [steamId, setSteamId] = useState<string>(user?.steamId || '');
+
+  const RPG_CLASSES = ['Guerreiro', 'Mago', 'Ladino', 'Bárbaro', 'Bardo', 'Clérigo', 'Paladino', 'Ranger'];
+
+  const detectCurrentLocationGps = async () => {
+    setDetectingGps(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permissão Negada', 'Autorize a localização nas configurações do seu celular para obter a posição exata via GPS.');
+        return;
+      }
+
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const lat = loc.coords.latitude;
+      const lon = loc.coords.longitude;
+      setLatitude(lat);
+      setLongitude(lon);
+
+      const reverse = await Location.reverseGeocodeAsync({ latitude: lat, longitude: lon });
+      if (reverse && reverse.length > 0) {
+        const place = reverse[0];
+        const cityName = `${place.city || place.subregion || 'Minha Cidade'}, ${place.region || place.country || ''}`.trim();
+        setLocationName(cityName);
+        Alert.alert('GPS Atualizado! 📍', `Sua localização atual foi definida para: ${cityName}`);
+      }
+    } catch (err: any) {
+      Alert.alert('Erro no GPS', 'Não foi possível detectar a localização atual por GPS.');
+    } finally {
+      setDetectingGps(false);
+    }
+  };
+
+  const selectPassportPreset = (preset: typeof GEEK_PASSPORT_PRESETS[0]) => {
+    setTravelLocationName(preset.name);
+    setTravelLatitude(preset.lat);
+    setTravelLongitude(preset.lon);
+  };
+
+  const geocodePassportLocation = async (text: string) => {
+    setTravelLocationName(text);
+    if (!text.trim()) return;
+
+    try {
+      const geocoded = await Location.geocodeAsync(text);
+      if (geocoded && geocoded.length > 0) {
+        setTravelLatitude(geocoded[0].latitude);
+        setTravelLongitude(geocoded[0].longitude);
+      }
+    } catch (err) {
+      console.log('Geocoding silent error', err);
+    }
+  };
 
   const toggleInterest = (interest: string) => {
     if (selectedInterests.includes(interest)) {
@@ -124,6 +197,10 @@ const EditProfileScreen = ({ navigation }: any) => {
 
     setLoading(true);
     try {
+      const favoriteGames = favoriteGamesText.split(',').map(s => s.trim()).filter(Boolean);
+      const favoriteAnimes = favoriteAnimesText.split(',').map(s => s.trim()).filter(Boolean);
+      const favoriteConsoles = favoriteConsolesText.split(',').map(s => s.trim()).filter(Boolean);
+
       const updatedData = await apiFetch(
         '/api/me',
         {
@@ -134,9 +211,18 @@ const EditProfileScreen = ({ navigation }: any) => {
             bio,
             interests: selectedInterests,
             musicGenres: selectedMusic,
+            rpgClass,
+            favoriteGames,
+            favoriteAnimes,
+            favoriteConsoles,
+            steamId,
             isTravelMode,
             travelLocationName,
+            travelLatitude,
+            travelLongitude,
             locationName,
+            latitude,
+            longitude,
             spotifyUrl,
             instagramHandle,
             twitterHandle,
@@ -179,7 +265,7 @@ const EditProfileScreen = ({ navigation }: any) => {
             <Ionicons name="camera" size={16} color="#FFF" />
           </View>
         </TouchableOpacity>
-        <Text style={styles.changePhotoText}>Toque para alterar a foto</Text>
+        <Text style={styles.changePhotoText}>Toque para alterar a foto principal</Text>
 
         {/* Inputs Básicos */}
         <View style={styles.fieldContainer}>
@@ -199,8 +285,65 @@ const EditProfileScreen = ({ navigation }: any) => {
           />
         </View>
 
+        {/* Classe RPG */}
         <View style={styles.fieldContainer}>
-          <Text style={styles.label}>Sua Cidade Atual</Text>
+          <Text style={styles.label}>Sua Classe RPG Favorita</Text>
+          <View style={styles.interestsGrid}>
+            {RPG_CLASSES.map((cls) => {
+              const isSelected = rpgClass === cls;
+              return (
+                <TouchableOpacity
+                  key={cls}
+                  style={[styles.interestChip, isSelected && styles.interestChipSelected]}
+                  onPress={() => setRpgClass(isSelected ? '' : cls)}
+                >
+                  <Text style={[styles.interestChipText, isSelected && styles.interestChipTextSelected]}>
+                    {cls === 'Mago' ? '🧙‍♂️' : cls === 'Guerreiro' ? '⚔️' : cls === 'Ladino' ? '🗡️' : '🛡️'} {cls}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Jogos & Animes Favoritos */}
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Jogos Favoritos (separados por vírgula)</Text>
+          <TextInput
+            style={styles.input}
+            value={favoriteGamesText}
+            onChangeText={setFavoriteGamesText}
+            placeholder="Ex: Elden Ring, Zelda, League of Legends"
+            placeholderTextColor={Colors.textMuted}
+          />
+        </View>
+
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Animes Favoritos (separados por vírgula)</Text>
+          <TextInput
+            style={styles.input}
+            value={favoriteAnimesText}
+            onChangeText={setFavoriteAnimesText}
+            placeholder="Ex: One Piece, Attack on Titan, Solo Leveling"
+            placeholderTextColor={Colors.textMuted}
+          />
+        </View>
+
+        {/* Seção de Geolocalização por GPS */}
+        <View style={styles.fieldContainer}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <Text style={styles.label}>Sua Cidade Atual</Text>
+            <TouchableOpacity style={styles.gpsButton} onPress={detectCurrentLocationGps} disabled={detectingGps}>
+              {detectingGps ? (
+                <ActivityIndicator size="small" color={Colors.secondary} />
+              ) : (
+                <>
+                  <Ionicons name="location" size={14} color={Colors.secondary} style={{ marginRight: 4 }} />
+                  <Text style={styles.gpsButtonText}>Detectar GPS 📍</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
           <TextInput
             style={styles.input}
             value={locationName}
@@ -213,11 +356,11 @@ const EditProfileScreen = ({ navigation }: any) => {
         {/* Modo Viagem / Geolocalização Global */}
         <View style={styles.travelSection}>
           <View style={styles.travelHeaderRow}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 8 }}>
               <Ionicons name="airplane" size={22} color={Colors.secondary} style={{ marginRight: 8 }} />
-              <View>
-                <Text style={styles.travelTitle}>Modo Viagem (Passport)</Text>
-                <Text style={styles.travelSubtitle}>Conecte-se com geeks de qualquer cidade do mundo</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.travelTitle}>Modo Passaporte ✈️</Text>
+                <Text style={styles.travelSubtitle}>Conecte-se com pessoas de qualquer cidade do mundo!</Text>
               </View>
             </View>
             <Switch
@@ -229,15 +372,35 @@ const EditProfileScreen = ({ navigation }: any) => {
           </View>
 
           {isTravelMode && (
-            <View style={{ marginTop: 12 }}>
+            <View style={{ marginTop: 14 }}>
               <Text style={styles.label}>Cidade de Destino</Text>
               <TextInput
                 style={styles.input}
                 value={travelLocationName}
-                onChangeText={setTravelLocationName}
-                placeholder="Ex: Tóquio, Japão / Londres, UK"
+                onChangeText={geocodePassportLocation}
+                placeholder="Digite a cidade (Ex: Tóquio, Japão / San Diego, EUA)"
                 placeholderTextColor={Colors.textMuted}
               />
+
+              <Text style={[styles.label, { marginTop: 12, fontSize: 12, color: Colors.textMuted }]}>
+                Destinos em Destaque (Toque para viajar):
+              </Text>
+              <View style={styles.presetsGrid}>
+                {GEEK_PASSPORT_PRESETS.map((preset, idx) => {
+                  const isSelected = travelLocationName === preset.name;
+                  return (
+                    <TouchableOpacity
+                      key={idx}
+                      style={[styles.presetChip, isSelected && styles.presetChipSelected]}
+                      onPress={() => selectPassportPreset(preset)}
+                    >
+                      <Text style={[styles.presetChipText, isSelected && styles.presetChipTextSelected]}>
+                        {preset.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             </View>
           )}
         </View>
@@ -245,7 +408,7 @@ const EditProfileScreen = ({ navigation }: any) => {
         {/* Redes Sociais & Mídia */}
         <View style={styles.socialsSection}>
           <View style={styles.socialsHeaderRow}>
-            <Text style={styles.sectionTitle}>Redes Sociais & Mídia (Opcional)</Text>
+            <Text style={styles.sectionTitle}>Redes Sociais & Plugs (Opcional)</Text>
             <View style={styles.toggleRow}>
               <Text style={styles.toggleLabel}>Exibir no Perfil</Text>
               <Switch
@@ -255,6 +418,17 @@ const EditProfileScreen = ({ navigation }: any) => {
                 thumbColor={showSocials ? Colors.primary : '#FFF'}
               />
             </View>
+          </View>
+
+          <View style={styles.socialInputContainer}>
+            <Ionicons name="game-controller" size={20} color="#00F0FF" style={styles.socialInputIcon} />
+            <TextInput
+              style={styles.socialInput}
+              value={steamId}
+              onChangeText={setSteamId}
+              placeholder="Steam Community (ID ou Username)"
+              placeholderTextColor={Colors.textMuted}
+            />
           </View>
 
           <View style={styles.socialInputContainer}>
@@ -286,28 +460,6 @@ const EditProfileScreen = ({ navigation }: any) => {
               value={twitterHandle}
               onChangeText={setTwitterHandle}
               placeholder="Twitter / X (@username)"
-              placeholderTextColor={Colors.textMuted}
-            />
-          </View>
-
-          <View style={styles.socialInputContainer}>
-            <Ionicons name="musical-notes-outline" size={20} color="#00F0FF" style={styles.socialInputIcon} />
-            <TextInput
-              style={styles.socialInput}
-              value={tiktokHandle}
-              onChangeText={setTiktokHandle}
-              placeholder="TikTok (@username)"
-              placeholderTextColor={Colors.textMuted}
-            />
-          </View>
-
-          <View style={styles.socialInputContainer}>
-            <Ionicons name="logo-facebook" size={20} color="#1877F2" style={styles.socialInputIcon} />
-            <TextInput
-              style={styles.socialInput}
-              value={facebookUrl}
-              onChangeText={setFacebookUrl}
-              placeholder="Facebook (Link ou Username)"
               placeholderTextColor={Colors.textMuted}
             />
           </View>
@@ -568,6 +720,48 @@ const styles = StyleSheet.create({
   saveButtonText: {
     color: '#FFF',
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  gpsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 240, 255, 0.1)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 240, 255, 0.3)',
+  },
+  gpsButtonText: {
+    color: Colors.secondary,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  presetsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 6,
+  },
+  presetChip: {
+    backgroundColor: Colors.surfaceLight,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  presetChipSelected: {
+    borderColor: Colors.secondary,
+    backgroundColor: 'rgba(0, 240, 255, 0.15)',
+  },
+  presetChipText: {
+    color: Colors.textMuted,
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  presetChipTextSelected: {
+    color: Colors.secondary,
     fontWeight: 'bold',
   },
 });

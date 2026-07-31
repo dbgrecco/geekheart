@@ -193,8 +193,14 @@ app.get('/api/me', authMiddleware, async (req: AuthRequest, res: Response) => {
         age: true,
         bio: true,
         image: true,
+        photos: { orderBy: { order: 'asc' } },
         pushToken: true,
         interests: true,
+        rpgClass: true,
+        favoriteGames: true,
+        favoriteAnimes: true,
+        favoriteConsoles: true,
+        favoriteGeekCategories: true,
         isOnline: true,
         latitude: true,
         longitude: true,
@@ -206,6 +212,7 @@ app.get('/api/me', authMiddleware, async (req: AuthRequest, res: Response) => {
         musicGenres: true,
         favoriteBands: true,
         spotifyUrl: true,
+        steamId: true,
         instagramHandle: true,
         twitterHandle: true,
         tiktokHandle: true,
@@ -214,6 +221,61 @@ app.get('/api/me', authMiddleware, async (req: AuthRequest, res: Response) => {
       },
     });
     res.json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Rota para adicionar foto à galeria
+app.post('/api/me/photos', authMiddleware, upload.single('image'), async (req: AuthRequest, res: Response) => {
+  const userId = req.userId as string;
+
+  if (!req.file) {
+    return res.status(400).json({ message: 'No image file uploaded' });
+  }
+
+  const photoUrl = `/uploads/${req.file.filename}`;
+
+  try {
+    const photosCount = await prisma.userPhoto.count({ where: { userId } });
+    const newPhoto = await prisma.userPhoto.create({
+      data: {
+        url: photoUrl,
+        order: photosCount,
+        userId,
+      },
+    });
+
+    // Se o usuário não tiver foto principal, atualiza
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user?.image) {
+      await prisma.user.update({ where: { id: userId }, data: { image: photoUrl } });
+    }
+
+    res.status(201).json(newPhoto);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Rota para deletar foto da galeria
+app.delete('/api/me/photos/:photoId', authMiddleware, async (req: AuthRequest, res: Response) => {
+  const userId = req.userId as string;
+  const photoId = req.params.photoId;
+  if (!photoId) {
+    return res.status(400).json({ message: 'Missing photoId' });
+  }
+
+  try {
+    const photo = await prisma.userPhoto.findFirst({ where: { id: photoId, userId } });
+    if (!photo) {
+      return res.status(404).json({ message: 'Photo not found' });
+    }
+
+    await prisma.userPhoto.delete({ where: { id: photo.id } });
+    res.json({ message: 'Photo deleted successfully' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -229,6 +291,11 @@ app.put('/api/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     bio,
     pushToken,
     interests,
+    rpgClass,
+    favoriteGames,
+    favoriteAnimes,
+    favoriteConsoles,
+    favoriteGeekCategories,
     latitude,
     longitude,
     locationName,
@@ -239,6 +306,7 @@ app.put('/api/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     musicGenres,
     favoriteBands,
     spotifyUrl,
+    steamId,
     instagramHandle,
     twitterHandle,
     tiktokHandle,
@@ -253,6 +321,11 @@ app.put('/api/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     if (bio !== undefined) dataToUpdate.bio = bio;
     if (pushToken !== undefined) dataToUpdate.pushToken = pushToken;
     if (Array.isArray(interests)) dataToUpdate.interests = interests;
+    if (rpgClass !== undefined) dataToUpdate.rpgClass = rpgClass;
+    if (Array.isArray(favoriteGames)) dataToUpdate.favoriteGames = favoriteGames;
+    if (Array.isArray(favoriteAnimes)) dataToUpdate.favoriteAnimes = favoriteAnimes;
+    if (Array.isArray(favoriteConsoles)) dataToUpdate.favoriteConsoles = favoriteConsoles;
+    if (Array.isArray(favoriteGeekCategories)) dataToUpdate.favoriteGeekCategories = favoriteGeekCategories;
     if (latitude !== undefined) dataToUpdate.latitude = latitude ? Number(latitude) : null;
     if (longitude !== undefined) dataToUpdate.longitude = longitude ? Number(longitude) : null;
     if (locationName !== undefined) dataToUpdate.locationName = locationName;
@@ -263,6 +336,7 @@ app.put('/api/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     if (Array.isArray(musicGenres)) dataToUpdate.musicGenres = musicGenres;
     if (Array.isArray(favoriteBands)) dataToUpdate.favoriteBands = favoriteBands;
     if (spotifyUrl !== undefined) dataToUpdate.spotifyUrl = spotifyUrl;
+    if (steamId !== undefined) dataToUpdate.steamId = steamId;
     if (instagramHandle !== undefined) dataToUpdate.instagramHandle = instagramHandle;
     if (twitterHandle !== undefined) dataToUpdate.twitterHandle = twitterHandle;
     if (tiktokHandle !== undefined) dataToUpdate.tiktokHandle = tiktokHandle;
@@ -279,8 +353,14 @@ app.put('/api/me', authMiddleware, async (req: AuthRequest, res: Response) => {
         age: true,
         bio: true,
         image: true,
+        photos: { orderBy: { order: 'asc' } },
         pushToken: true,
         interests: true,
+        rpgClass: true,
+        favoriteGames: true,
+        favoriteAnimes: true,
+        favoriteConsoles: true,
+        favoriteGeekCategories: true,
         isOnline: true,
         latitude: true,
         longitude: true,
@@ -292,6 +372,7 @@ app.put('/api/me', authMiddleware, async (req: AuthRequest, res: Response) => {
         musicGenres: true,
         favoriteBands: true,
         spotifyUrl: true,
+        steamId: true,
         instagramHandle: true,
         twitterHandle: true,
         tiktokHandle: true,
@@ -306,7 +387,7 @@ app.put('/api/me', authMiddleware, async (req: AuthRequest, res: Response) => {
   }
 });
 
-// Rota para buscar perfis com % de compatibilidade Geek Match & Música + Distância
+// Rota para buscar perfis com % de compatibilidade Geek Match estendida
 app.get('/api/profiles', authMiddleware, async (req: AuthRequest, res: Response) => {
   const userId = req.userId as string;
 
@@ -315,6 +396,11 @@ app.get('/api/profiles', authMiddleware, async (req: AuthRequest, res: Response)
       where: { id: userId },
       select: {
         interests: true,
+        rpgClass: true,
+        favoriteGames: true,
+        favoriteAnimes: true,
+        favoriteConsoles: true,
+        favoriteGeekCategories: true,
         musicGenres: true,
         latitude: true,
         longitude: true,
@@ -325,7 +411,12 @@ app.get('/api/profiles', authMiddleware, async (req: AuthRequest, res: Response)
     });
 
     const myInterests = currentUser?.interests || [];
+    const myGames = currentUser?.favoriteGames || [];
+    const myAnimes = currentUser?.favoriteAnimes || [];
+    const myConsoles = currentUser?.favoriteConsoles || [];
+    const myCategories = currentUser?.favoriteGeekCategories || [];
     const myMusic = currentUser?.musicGenres || [];
+    const myRpgClass = currentUser?.rpgClass;
 
     const myLat = currentUser?.isTravelMode ? currentUser?.travelLatitude || currentUser?.latitude : currentUser?.latitude;
     const myLon = currentUser?.isTravelMode ? currentUser?.travelLongitude || currentUser?.longitude : currentUser?.longitude;
@@ -335,11 +426,20 @@ app.get('/api/profiles', authMiddleware, async (req: AuthRequest, res: Response)
       select: { targetUserId: true },
     });
 
+    const blockedUserIds = await prisma.block.findMany({
+      where: { OR: [{ blockerId: userId }, { blockedId: userId }] },
+      select: { blockerId: true, blockedId: true },
+    });
+    const excludeIds = new Set<string>([
+      userId,
+      ...interactedUserIds.map((i: { targetUserId: string }) => i.targetUserId),
+      ...blockedUserIds.map((b: { blockerId: string; blockedId: string }) => (b.blockerId === userId ? b.blockedId : b.blockerId)),
+    ]);
+
     const users = await prisma.user.findMany({
       where: {
         id: {
-          not: userId,
-          notIn: interactedUserIds.map((i: { targetUserId: string }) => i.targetUserId),
+          notIn: Array.from(excludeIds),
         },
       },
       select: {
@@ -348,7 +448,13 @@ app.get('/api/profiles', authMiddleware, async (req: AuthRequest, res: Response)
         age: true,
         bio: true,
         image: true,
+        photos: { orderBy: { order: 'asc' } },
         interests: true,
+        rpgClass: true,
+        favoriteGames: true,
+        favoriteAnimes: true,
+        favoriteConsoles: true,
+        favoriteGeekCategories: true,
         isOnline: true,
         lastSeen: true,
         latitude: true,
@@ -359,6 +465,7 @@ app.get('/api/profiles', authMiddleware, async (req: AuthRequest, res: Response)
         musicGenres: true,
         favoriteBands: true,
         spotifyUrl: true,
+        steamId: true,
         instagramHandle: true,
         twitterHandle: true,
         tiktokHandle: true,
@@ -368,23 +475,53 @@ app.get('/api/profiles', authMiddleware, async (req: AuthRequest, res: Response)
     });
 
     const profilesWithCompatibility = users.map((u: any) => {
-      let compatibility = 75;
-      let interestScore = 70;
-      let musicScore = 70;
+      let totalWeight = 0;
+      let matchedWeight = 0;
 
-      if (myInterests.length > 0 && u.interests.length > 0) {
-        const commonInterests = u.interests.filter((i: string) => myInterests.includes(i)).length;
-        const total = Math.max(myInterests.length, u.interests.length);
-        interestScore = Math.min(99, Math.max(60, Math.round((commonInterests / total) * 40 + 60)));
+      // Class RPG bonus (15%)
+      if (myRpgClass && u.rpgClass) {
+        totalWeight += 15;
+        if (myRpgClass === u.rpgClass) {
+          matchedWeight += 15;
+        } else {
+          matchedWeight += 8; // Party de classes diferentes também é compatível!
+        }
       }
 
-      if (myMusic.length > 0 && u.musicGenres.length > 0) {
+      // Interesses gerais (30%)
+      if (myInterests.length > 0 || u.interests.length > 0) {
+        totalWeight += 30;
+        const common = u.interests.filter((i: string) => myInterests.includes(i)).length;
+        const maxPossible = Math.max(1, Math.max(myInterests.length, u.interests.length));
+        matchedWeight += Math.round((common / maxPossible) * 30);
+      }
+
+      // Jogos favoritos (20%)
+      if (myGames.length > 0 || u.favoriteGames.length > 0) {
+        totalWeight += 20;
+        const commonGames = u.favoriteGames.filter((g: string) => myGames.includes(g)).length;
+        const maxGames = Math.max(1, Math.max(myGames.length, u.favoriteGames.length));
+        matchedWeight += Math.round((commonGames / maxGames) * 20);
+      }
+
+      // Animes favoritos (15%)
+      if (myAnimes.length > 0 || u.favoriteAnimes.length > 0) {
+        totalWeight += 15;
+        const commonAnimes = u.favoriteAnimes.filter((a: string) => myAnimes.includes(a)).length;
+        const maxAnimes = Math.max(1, Math.max(myAnimes.length, u.favoriteAnimes.length));
+        matchedWeight += Math.round((commonAnimes / maxAnimes) * 15);
+      }
+
+      // Gêneros Musicais (20%)
+      if (myMusic.length > 0 || u.musicGenres.length > 0) {
+        totalWeight += 20;
         const commonMusic = u.musicGenres.filter((m: string) => myMusic.includes(m)).length;
-        const totalMusic = Math.max(myMusic.length, u.musicGenres.length);
-        musicScore = Math.min(99, Math.max(60, Math.round((commonMusic / totalMusic) * 40 + 60)));
+        const maxMusic = Math.max(1, Math.max(myMusic.length, u.musicGenres.length));
+        matchedWeight += Math.round((commonMusic / maxMusic) * 20);
       }
 
-      compatibility = Math.round(interestScore * 0.6 + musicScore * 0.4);
+      const compatibilityPercent = totalWeight > 0 ? Math.round((matchedWeight / totalWeight) * 40 + 60) : 75;
+      const finalCompatibility = Math.min(99, Math.max(55, compatibilityPercent));
 
       const targetLat = u.isTravelMode ? u.travelLatitude || u.latitude : u.latitude;
       const targetLon = u.isTravelMode ? u.travelLongitude || u.longitude : u.longitude;
@@ -393,11 +530,13 @@ app.get('/api/profiles', authMiddleware, async (req: AuthRequest, res: Response)
 
       return {
         ...u,
-        compatibility,
-        musicScore,
+        compatibility: finalCompatibility,
         distanceKm,
       };
     });
+
+    // Ordena por maior porcentagem de compatibilidade geek
+    profilesWithCompatibility.sort((a, b) => b.compatibility - a.compatibility);
 
     res.json(profilesWithCompatibility);
   } catch (error) {
@@ -406,9 +545,9 @@ app.get('/api/profiles', authMiddleware, async (req: AuthRequest, res: Response)
   }
 });
 
-// Rota para registrar uma interação (like/dislike)
+// Rota para registrar uma interação (like/dislike/superlike)
 app.post('/api/interactions', authMiddleware, async (req: AuthRequest, res: Response) => {
-  const { targetUserId, liked } = req.body;
+  const { targetUserId, liked, isSuperLike } = req.body;
   const userId = req.userId as string;
 
   if (!targetUserId || typeof liked !== 'boolean') {
@@ -417,7 +556,7 @@ app.post('/api/interactions', authMiddleware, async (req: AuthRequest, res: Resp
 
   try {
     const newInteraction = await prisma.interaction.create({
-      data: { userId, targetUserId, liked },
+      data: { userId, targetUserId, liked, isSuperLike: Boolean(isSuperLike) },
     });
 
     if (liked) {
@@ -444,12 +583,14 @@ app.post('/api/interactions', authMiddleware, async (req: AuthRequest, res: Resp
         const user1 = await prisma.user.findUnique({ where: { id: userId } });
         const user2 = await prisma.user.findUnique({ where: { id: targetUserId } });
 
+        const titleText = isSuperLike ? '💥 CRITICAL HIT! VOCÊS DERAM MATCH!' : '⚡ NOVO MATCH!';
+
         if (user1?.pushToken && Expo.isExpoPushToken(user1.pushToken)) {
           expo.sendPushNotificationsAsync([
             {
               to: user1.pushToken,
               sound: 'default',
-              title: '⚡ NOVO MATCH GEEK!',
+              title: titleText,
               body: `Você deu match com ${user2?.name}!`,
               data: { matchId: newMatch.id, type: 'match' },
             },
@@ -460,7 +601,7 @@ app.post('/api/interactions', authMiddleware, async (req: AuthRequest, res: Resp
             {
               to: user2.pushToken,
               sound: 'default',
-              title: '⚡ NOVO MATCH GEEK!',
+              title: titleText,
               body: `Você deu match com ${user1?.name}!`,
               data: { matchId: newMatch.id, type: 'match' },
             },
@@ -472,6 +613,54 @@ app.post('/api/interactions', authMiddleware, async (req: AuthRequest, res: Resp
     }
 
     res.status(201).json({ match: false, interaction: newInteraction });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Rota para bloquear um usuário
+app.post('/api/blocks', authMiddleware, async (req: AuthRequest, res: Response) => {
+  const { blockedId } = req.body;
+  const userId = req.userId as string;
+
+  if (!blockedId) {
+    return res.status(400).json({ message: 'Missing blockedId' });
+  }
+
+  try {
+    const block = await prisma.block.create({
+      data: {
+        blockerId: userId,
+        blockedId,
+      },
+    });
+    res.status(201).json({ message: 'User blocked successfully', block });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error or user already blocked' });
+  }
+});
+
+// Rota para denunciar um usuário
+app.post('/api/reports', authMiddleware, async (req: AuthRequest, res: Response) => {
+  const { reportedId, reason, details } = req.body;
+  const userId = req.userId as string;
+
+  if (!reportedId || !reason) {
+    return res.status(400).json({ message: 'Missing reportedId or reason' });
+  }
+
+  try {
+    const report = await prisma.report.create({
+      data: {
+        reporterId: userId,
+        reportedId,
+        reason,
+        details,
+      },
+    });
+    res.status(201).json({ message: 'Report submitted successfully', report });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
