@@ -10,6 +10,17 @@ export interface User {
   lastSeen?: string;
   pushToken?: string;
   compatibility?: number;
+  musicScore?: number;
+  latitude?: number | null;
+  longitude?: number | null;
+  locationName?: string | null;
+  isTravelMode?: boolean;
+  travelLocationName?: string | null;
+  travelLatitude?: number | null;
+  travelLongitude?: number | null;
+  musicGenres?: string[];
+  favoriteBands?: string[];
+  distanceKm?: number | null;
 }
 
 export interface Match {

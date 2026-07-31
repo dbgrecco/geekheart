@@ -1,8 +1,21 @@
 # CHANGELOG
 
-## 2026-07-31 - Versão Premium
+## 2026-07-31 - Versão Premium + Geolocalização & Modo Música
 
 ### Added
+- **Geolocalização Global & Modo Viagem (Passport Mode):**
+  - Registro de localização GPS e cálculo de distância em km (`distanceKm`) via fórmula de Haversine.
+  - Recurso **Modo Viagem (Passport Mode)** para explorar candidatos em qualquer cidade do mundo (ex: *Tóquio, Londes, Berlim, Nova York*).
+  - Exibição de badge com distância ou ícone de viagem no cartão de perfil (`📍 a 12 km` / `✈️ Modo Viagem: Tóquio`).
+
+- **Modo Música Underground & Trilhas Sonoras Geek:**
+  - Suporte a 20+ gêneros musicais e vertentes:
+    - **Metal:** *Heavy Metal, Thrash, Death, Black, Power, Prog, Symphonic, Doom, Nu Metal/Metalcore, Industrial Metal*.
+    - **Underground & Alt:** *Synthwave/Cyberpunk, Darkwave/Goth, EBM/Industrial, Post-Punk, Grunge, Hardcore Punk*.
+    - **Trilhas Geek:** *Anime OSTs & J-Rock, Game OSTs (Chiptune/Synth/8-Bit), Sci-Fi Movie Scores, HQ Themes*.
+  - Cálculo de compatibilidade ponderada entre sintonia musical + interesses geek no radar.
+  - Seleção interativa de bandas e gêneros musicais na tela de edição de perfil.
+
 - **Design System & UX Cyberpunk/Dark Neon:**
   - Identidade visual moderna com paleta escuro-obsidiana (`#0F0E17`), magenta neon (`#FF2A85`) e azul elétrico (`#00F0FF`).
   - Badges e chips interativos de Interesses Geek (*PC Gaming, Anime, Cosplay, D&D, Tech/Dev, Sci-Fi, HQs, etc.*).

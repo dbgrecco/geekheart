@@ -138,13 +138,43 @@ app.post('/api/me/image', authMiddleware, upload.single('image'), async (req, re
         res.status(500).json({ message: 'Server error' });
     }
 });
+function calculateDistanceKm(lat1, lon1, lat2, lon2) {
+    if (lat1 == null || lon1 == null || lat2 == null || lon2 == null)
+        return null;
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return Math.round(R * c);
+}
 // Rota para buscar o perfil do usuário logado
 app.get('/api/me', authMiddleware, async (req, res) => {
     const userId = req.userId;
     try {
         const user = await prisma.user.findUnique({
             where: { id: userId },
-            select: { id: true, name: true, email: true, age: true, bio: true, image: true, pushToken: true, interests: true, isOnline: true },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                age: true,
+                bio: true,
+                image: true,
+                pushToken: true,
+                interests: true,
+                isOnline: true,
+                latitude: true,
+                longitude: true,
+                locationName: true,
+                isTravelMode: true,
+                travelLocationName: true,
+                travelLatitude: true,
+                travelLongitude: true,
+                musicGenres: true,
+                favoriteBands: true,
+            },
         });
         res.json(user);
     }
@@ -156,7 +186,7 @@ app.get('/api/me', authMiddleware, async (req, res) => {
 // Rota para atualizar o perfil do usuário logado
 app.put('/api/me', authMiddleware, async (req, res) => {
     const userId = req.userId;
-    const { name, age, bio, pushToken, interests } = req.body;
+    const { name, age, bio, pushToken, interests, latitude, longitude, locationName, isTravelMode, travelLocationName, travelLatitude, travelLongitude, musicGenres, favoriteBands, } = req.body;
     try {
         const dataToUpdate = {};
         if (name !== undefined)
@@ -169,10 +199,47 @@ app.put('/api/me', authMiddleware, async (req, res) => {
             dataToUpdate.pushToken = pushToken;
         if (Array.isArray(interests))
             dataToUpdate.interests = interests;
+        if (latitude !== undefined)
+            dataToUpdate.latitude = latitude ? Number(latitude) : null;
+        if (longitude !== undefined)
+            dataToUpdate.longitude = longitude ? Number(longitude) : null;
+        if (locationName !== undefined)
+            dataToUpdate.locationName = locationName;
+        if (isTravelMode !== undefined)
+            dataToUpdate.isTravelMode = Boolean(isTravelMode);
+        if (travelLocationName !== undefined)
+            dataToUpdate.travelLocationName = travelLocationName;
+        if (travelLatitude !== undefined)
+            dataToUpdate.travelLatitude = travelLatitude ? Number(travelLatitude) : null;
+        if (travelLongitude !== undefined)
+            dataToUpdate.travelLongitude = travelLongitude ? Number(travelLongitude) : null;
+        if (Array.isArray(musicGenres))
+            dataToUpdate.musicGenres = musicGenres;
+        if (Array.isArray(favoriteBands))
+            dataToUpdate.favoriteBands = favoriteBands;
         const updatedUser = await prisma.user.update({
             where: { id: userId },
             data: dataToUpdate,
-            select: { id: true, name: true, email: true, age: true, bio: true, image: true, pushToken: true, interests: true },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                age: true,
+                bio: true,
+                image: true,
+                pushToken: true,
+                interests: true,
+                isOnline: true,
+                latitude: true,
+                longitude: true,
+                locationName: true,
+                isTravelMode: true,
+                travelLocationName: true,
+                travelLatitude: true,
+                travelLongitude: true,
+                musicGenres: true,
+                favoriteBands: true,
+            },
         });
         res.json(updatedUser);
     }
@@ -181,15 +248,26 @@ app.put('/api/me', authMiddleware, async (req, res) => {
         res.status(500).json({ message: 'Server error' });
     }
 });
-// Rota para buscar perfis com % de compatibilidade Geek Match
+// Rota para buscar perfis com % de compatibilidade Geek Match & Música + Distância
 app.get('/api/profiles', authMiddleware, async (req, res) => {
     const userId = req.userId;
     try {
         const currentUser = await prisma.user.findUnique({
             where: { id: userId },
-            select: { interests: true },
+            select: {
+                interests: true,
+                musicGenres: true,
+                latitude: true,
+                longitude: true,
+                isTravelMode: true,
+                travelLatitude: true,
+                travelLongitude: true,
+            },
         });
         const myInterests = currentUser?.interests || [];
+        const myMusic = currentUser?.musicGenres || [];
+        const myLat = currentUser?.isTravelMode ? currentUser?.travelLatitude || currentUser?.latitude : currentUser?.latitude;
+        const myLon = currentUser?.isTravelMode ? currentUser?.travelLongitude || currentUser?.longitude : currentUser?.longitude;
         const interactedUserIds = await prisma.interaction.findMany({
             where: { userId: userId },
             select: { targetUserId: true },
@@ -210,21 +288,38 @@ app.get('/api/profiles', authMiddleware, async (req, res) => {
                 interests: true,
                 isOnline: true,
                 lastSeen: true,
+                latitude: true,
+                longitude: true,
+                locationName: true,
+                isTravelMode: true,
+                travelLocationName: true,
+                musicGenres: true,
+                favoriteBands: true,
             },
         });
         const profilesWithCompatibility = users.map((u) => {
             let compatibility = 75;
+            let interestScore = 70;
+            let musicScore = 70;
             if (myInterests.length > 0 && u.interests.length > 0) {
-                const common = u.interests.filter((i) => myInterests.includes(i)).length;
+                const commonInterests = u.interests.filter((i) => myInterests.includes(i)).length;
                 const total = Math.max(myInterests.length, u.interests.length);
-                compatibility = Math.min(99, Math.max(60, Math.round((common / total) * 40 + 60)));
+                interestScore = Math.min(99, Math.max(60, Math.round((commonInterests / total) * 40 + 60)));
             }
-            else if (u.interests.length > 0 || myInterests.length > 0) {
-                compatibility = 70;
+            if (myMusic.length > 0 && u.musicGenres.length > 0) {
+                const commonMusic = u.musicGenres.filter((m) => myMusic.includes(m)).length;
+                const totalMusic = Math.max(myMusic.length, u.musicGenres.length);
+                musicScore = Math.min(99, Math.max(60, Math.round((commonMusic / totalMusic) * 40 + 60)));
             }
+            compatibility = Math.round(interestScore * 0.6 + musicScore * 0.4);
+            const targetLat = u.isTravelMode ? u.travelLatitude || u.latitude : u.latitude;
+            const targetLon = u.isTravelMode ? u.travelLongitude || u.longitude : u.longitude;
+            const distanceKm = calculateDistanceKm(myLat, myLon, targetLat, targetLon);
             return {
                 ...u,
                 compatibility,
+                musicScore,
+                distanceKm,
             };
         });
         res.json(profilesWithCompatibility);

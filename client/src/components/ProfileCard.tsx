@@ -14,6 +14,14 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
   const imageUrl = getImageUrl(profile.image) || 'https://via.placeholder.com/600x800/1A1829/FF2A85?text=HeartGeek';
   const compatibility = profile.compatibility || 75;
 
+  const locationLabel = profile.isTravelMode
+    ? `✈️ ${profile.travelLocationName || 'Modo Viagem'}`
+    : profile.distanceKm != null
+    ? `📍 a ${profile.distanceKm} km`
+    : profile.locationName
+    ? `📍 ${profile.locationName}`
+    : null;
+
   return (
     <View style={styles.card}>
       <Image source={{ uri: imageUrl }} style={styles.image} resizeMode="cover" />
@@ -21,9 +29,17 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
       {/* Overlay com degradê escuro */}
       <View style={styles.gradientOverlay} />
 
-      {/* Badge de Compatibilidade Geek */}
-      <View style={styles.compatibilityBadge}>
-        <Text style={styles.compatibilityText}>⚡ {compatibility}% GEEK MATCH</Text>
+      {/* Badges Superiores */}
+      <View style={styles.topBadgesRow}>
+        <View style={styles.compatibilityBadge}>
+          <Text style={styles.compatibilityText}>⚡ {compatibility}% GEEK MATCH</Text>
+        </View>
+
+        {locationLabel && (
+          <View style={styles.distanceBadge}>
+            <Text style={styles.distanceText}>{locationLabel}</Text>
+          </View>
+        )}
       </View>
 
       {/* Conteúdo Informativo do Perfil */}
@@ -41,14 +57,25 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ profile }) => {
           )}
         </View>
 
-        {profile.bio ? <Text style={styles.bio} numberOfLines={3}>{profile.bio}</Text> : null}
+        {profile.bio ? <Text style={styles.bio} numberOfLines={2}>{profile.bio}</Text> : null}
 
-        {/* Badges de Interesses Geek */}
+        {/* Interesses Geek */}
         {profile.interests && profile.interests.length > 0 && (
-          <View style={styles.interestsContainer}>
-            {profile.interests.slice(0, 4).map((interest, idx) => (
-              <View key={idx} style={styles.chip}>
+          <View style={styles.tagsContainer}>
+            {profile.interests.slice(0, 3).map((interest, idx) => (
+              <View key={`int-${idx}`} style={styles.chip}>
                 <Text style={styles.chipText}>{interest}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Vertentes Musicais & Trilhas */}
+        {profile.musicGenres && profile.musicGenres.length > 0 && (
+          <View style={styles.tagsContainer}>
+            {profile.musicGenres.slice(0, 3).map((genre, idx) => (
+              <View key={`mus-${idx}`} style={[styles.chip, styles.musicChip]}>
+                <Text style={[styles.chipText, styles.musicChipText]}>{genre}</Text>
               </View>
             ))}
           </View>
@@ -82,35 +109,50 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(15, 14, 23, 0.45)',
   },
-  compatibilityBadge: {
+  topBadgesRow: {
     position: 'absolute',
-    top: 20,
-    left: 20,
+    top: 16,
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  compatibilityBadge: {
     backgroundColor: Colors.surfaceLight,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: Colors.secondary,
-    shadowColor: Colors.secondary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 10,
-    elevation: 5,
   },
   compatibilityText: {
     color: Colors.secondary,
     fontWeight: 'bold',
-    fontSize: 13,
-    letterSpacing: 0.5,
+    fontSize: 12,
+  },
+  distanceBadge: {
+    backgroundColor: Colors.surfaceLight,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+  distanceText: {
+    color: Colors.primary,
+    fontWeight: 'bold',
+    fontSize: 12,
   },
   infoContainer: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    padding: 22,
-    backgroundColor: 'rgba(15, 14, 23, 0.88)',
+    padding: 20,
+    backgroundColor: 'rgba(15, 14, 23, 0.9)',
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 42, 133, 0.2)',
   },
@@ -118,11 +160,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 6,
+    marginBottom: 4,
   },
   name: {
     color: Colors.text,
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '800',
   },
   onlineTag: {
@@ -149,28 +191,35 @@ const styles = StyleSheet.create({
   },
   bio: {
     color: Colors.textMuted,
-    fontSize: 15,
-    lineHeight: 21,
-    marginBottom: 12,
+    fontSize: 14,
+    lineHeight: 19,
+    marginBottom: 10,
   },
-  interestsContainer: {
+  tagsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
     marginTop: 4,
   },
   chip: {
     backgroundColor: Colors.surfaceLight,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: Colors.border,
   },
   chipText: {
     color: Colors.text,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
+  },
+  musicChip: {
+    borderColor: 'rgba(0, 240, 255, 0.4)',
+    backgroundColor: 'rgba(0, 240, 255, 0.08)',
+  },
+  musicChipText: {
+    color: Colors.secondary,
   },
 });
 

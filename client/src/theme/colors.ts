@@ -30,3 +30,31 @@ export const GEEK_INTERESTS = [
   '🎧 eSports',
   '📚 HQs & Books',
 ];
+
+export const MUSIC_GENRES = [
+  // Vertentes do Metal
+  '⚡ Heavy Metal',
+  '🌋 Thrash Metal',
+  '💀 Death Metal',
+  '🖤 Black Metal',
+  '⚔️ Power Metal',
+  '🌀 Progressive Metal',
+  '🎻 Symphonic Metal',
+  '🏛️ Doom Metal',
+  '🤘 Nu Metal / Metalcore',
+  '⚙️ Industrial Metal',
+
+  // Underground & Alternativo
+  '👾 Synthwave / Cyberpunk',
+  '🦇 Darkwave / Goth',
+  '🔊 EBM / Industrial',
+  '🖤 Post-Punk',
+  '⛓️ Grunge',
+  '⚡ Hardcore Punk',
+
+  // Trilhas Sonoras Geek
+  '🎌 Anime OSTs & J-Rock',
+  '🎮 Game OSTs (Chiptune/Synth/8-Bit)',
+  '🚀 Sci-Fi & Movie Scores',
+  '📚 HQ & Comic Book Themes',
+];

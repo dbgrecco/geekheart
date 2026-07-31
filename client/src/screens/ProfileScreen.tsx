@@ -35,6 +35,21 @@ const ProfileScreen = ({ navigation }: any) => {
             {user?.age ? `, ${user.age}` : ''}
           </Text>
           <Text style={styles.email}>{user?.email}</Text>
+
+          {/* Localização & Modo Viagem */}
+          <View style={styles.locationBadgeContainer}>
+            <Ionicons
+              name={user?.isTravelMode ? 'airplane' : 'location'}
+              size={16}
+              color={user?.isTravelMode ? Colors.secondary : Colors.primary}
+              style={{ marginRight: 6 }}
+            />
+            <Text style={styles.locationBadgeText}>
+              {user?.isTravelMode
+                ? `Modo Viagem: ${user.travelLocationName || 'Ativo'}`
+                : user?.locationName || 'Localização Atual'}
+            </Text>
+          </View>
         </View>
 
         {/* Estatísticas do Jogador */}
@@ -46,9 +61,9 @@ const ProfileScreen = ({ navigation }: any) => {
           </View>
 
           <View style={styles.statCard}>
-            <Ionicons name="checkmark-done-circle" size={24} color={Colors.primary} />
-            <Text style={styles.statValue}>100%</Text>
-            <Text style={styles.statLabel}>Verificado</Text>
+            <Ionicons name="musical-notes" size={24} color={Colors.primary} />
+            <Text style={styles.statValue}>{user?.musicGenres?.length || 0}</Text>
+            <Text style={styles.statLabel}>Estilos Musicais</Text>
           </View>
         </View>
 
@@ -62,7 +77,7 @@ const ProfileScreen = ({ navigation }: any) => {
 
         {/* Interesses Geek */}
         <View style={styles.sectionCard}>
-          <Text style={styles.sectionTitle}>Seus Interesses</Text>
+          <Text style={styles.sectionTitle}>Interesses Geek</Text>
           {user?.interests && user.interests.length > 0 ? (
             <View style={styles.interestsGrid}>
               {user.interests.map((interest, idx) => (
@@ -76,10 +91,26 @@ const ProfileScreen = ({ navigation }: any) => {
           )}
         </View>
 
+        {/* Vertentes Musicais & Trilhas */}
+        <View style={styles.sectionCard}>
+          <Text style={styles.sectionTitle}>Músicas & Trilhas Sonoras</Text>
+          {user?.musicGenres && user.musicGenres.length > 0 ? (
+            <View style={styles.interestsGrid}>
+              {user.musicGenres.map((genre, idx) => (
+                <View key={idx} style={[styles.chip, styles.musicChip]}>
+                  <Text style={[styles.chipText, styles.musicChipText]}>{genre}</Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text style={styles.emptyInterestsText}>Nenhum estilo musical selecionado.</Text>
+          )}
+        </View>
+
         {/* Ações */}
         <TouchableOpacity style={styles.editButton} onPress={() => navigation.navigate('EditProfile')}>
           <Ionicons name="create-outline" size={20} color="#FFF" style={{ marginRight: 8 }} />
-          <Text style={styles.editButtonText}>Editar Perfil & Foto</Text>
+          <Text style={styles.editButtonText}>Editar Perfil & Preferências</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.logoutButton} onPress={logout}>
@@ -133,6 +164,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.textMuted,
     marginTop: 4,
+  },
+  locationBadgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceLight,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  locationBadgeText: {
+    color: Colors.text,
+    fontSize: 13,
+    fontWeight: '600',
   },
   statsRow: {
     flexDirection: 'row',
@@ -202,6 +249,13 @@ const styles = StyleSheet.create({
     color: Colors.secondary,
     fontSize: 13,
     fontWeight: '600',
+  },
+  musicChip: {
+    borderColor: 'rgba(0, 240, 255, 0.4)',
+    backgroundColor: 'rgba(0, 240, 255, 0.08)',
+  },
+  musicChipText: {
+    color: Colors.secondary,
   },
   editButton: {
     width: '100%',

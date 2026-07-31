@@ -11,10 +11,11 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Switch,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../context/AuthContext';
-import { Colors, GEEK_INTERESTS } from '../theme/colors';
+import { Colors, GEEK_INTERESTS, MUSIC_GENRES } from '../theme/colors';
 import { apiFetch, getImageUrl, API_BASE_URL } from '../config/api';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -25,6 +26,10 @@ const EditProfileScreen = ({ navigation }: any) => {
   const [age, setAge] = useState(user?.age ? String(user.age) : '');
   const [bio, setBio] = useState(user?.bio || '');
   const [selectedInterests, setSelectedInterests] = useState<string[]>(user?.interests || []);
+  const [selectedMusic, setSelectedMusic] = useState<string[]>(user?.musicGenres || []);
+  const [isTravelMode, setIsTravelMode] = useState<boolean>(user?.isTravelMode || false);
+  const [travelLocationName, setTravelLocationName] = useState<string>(user?.travelLocationName || '');
+  const [locationName, setLocationName] = useState<string>(user?.locationName || 'São Paulo, Brasil');
   const [imageUri, setImageUri] = useState<string | null>(getImageUrl(user?.image));
   const [loading, setLoading] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -34,6 +39,14 @@ const EditProfileScreen = ({ navigation }: any) => {
       setSelectedInterests(selectedInterests.filter((i) => i !== interest));
     } else {
       setSelectedInterests([...selectedInterests, interest]);
+    }
+  };
+
+  const toggleMusic = (genre: string) => {
+    if (selectedMusic.includes(genre)) {
+      setSelectedMusic(selectedMusic.filter((m) => m !== genre));
+    } else {
+      setSelectedMusic([...selectedMusic, genre]);
     }
   };
 
@@ -111,6 +124,10 @@ const EditProfileScreen = ({ navigation }: any) => {
             age: age ? Number(age) : null,
             bio,
             interests: selectedInterests,
+            musicGenres: selectedMusic,
+            isTravelMode,
+            travelLocationName,
+            locationName,
           }),
         },
         token
@@ -149,7 +166,7 @@ const EditProfileScreen = ({ navigation }: any) => {
         </TouchableOpacity>
         <Text style={styles.changePhotoText}>Toque para alterar a foto</Text>
 
-        {/* Inputs */}
+        {/* Inputs Básicos */}
         <View style={styles.fieldContainer}>
           <Text style={styles.label}>Nome / Apelido</Text>
           <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Seu nome" placeholderTextColor={Colors.textMuted} />
@@ -165,6 +182,49 @@ const EditProfileScreen = ({ navigation }: any) => {
             placeholderTextColor={Colors.textMuted}
             keyboardType="number-pad"
           />
+        </View>
+
+        <View style={styles.fieldContainer}>
+          <Text style={styles.label}>Sua Cidade Atual</Text>
+          <TextInput
+            style={styles.input}
+            value={locationName}
+            onChangeText={setLocationName}
+            placeholder="Ex: São Paulo, Brasil"
+            placeholderTextColor={Colors.textMuted}
+          />
+        </View>
+
+        {/* Modo Viagem / Geolocalização Global */}
+        <View style={styles.travelSection}>
+          <View style={styles.travelHeaderRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="airplane" size={22} color={Colors.secondary} style={{ marginRight: 8 }} />
+              <View>
+                <Text style={styles.travelTitle}>Modo Viagem (Passport)</Text>
+                <Text style={styles.travelSubtitle}>Conecte-se com geeks de qualquer cidade do mundo</Text>
+              </View>
+            </View>
+            <Switch
+              value={isTravelMode}
+              onValueChange={setIsTravelMode}
+              trackColor={{ false: Colors.border, true: Colors.primary }}
+              thumbColor={isTravelMode ? Colors.secondary : '#FFF'}
+            />
+          </View>
+
+          {isTravelMode && (
+            <View style={{ marginTop: 12 }}>
+              <Text style={styles.label}>Cidade de Destino</Text>
+              <TextInput
+                style={styles.input}
+                value={travelLocationName}
+                onChangeText={setTravelLocationName}
+                placeholder="Ex: Tóquio, Japão / Londres, UK"
+                placeholderTextColor={Colors.textMuted}
+              />
+            </View>
+          )}
         </View>
 
         <View style={styles.fieldContainer}>
@@ -192,6 +252,23 @@ const EditProfileScreen = ({ navigation }: any) => {
                 onPress={() => toggleInterest(interest)}
               >
                 <Text style={[styles.interestChipText, isSelected && styles.interestChipTextSelected]}>{interest}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Modo Música & Trilhas Geek */}
+        <Text style={styles.sectionTitle}>Gêneros Musicais, Metal & Trilhas Geek</Text>
+        <View style={styles.interestsGrid}>
+          {MUSIC_GENRES.map((genre) => {
+            const isSelected = selectedMusic.includes(genre);
+            return (
+              <TouchableOpacity
+                key={genre}
+                style={[styles.interestChip, isSelected && styles.musicChipSelected]}
+                onPress={() => toggleMusic(genre)}
+              >
+                <Text style={[styles.interestChipText, isSelected && styles.musicChipTextSelected]}>{genre}</Text>
               </TouchableOpacity>
             );
           })}
@@ -258,7 +335,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: Colors.textMuted,
     fontSize: 13,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   fieldContainer: {
     marginBottom: 16,
@@ -279,6 +356,29 @@ const styles = StyleSheet.create({
     height: 52,
     fontSize: 15,
   },
+  travelSection: {
+    backgroundColor: Colors.surface,
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.secondary,
+    marginBottom: 20,
+  },
+  travelHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  travelTitle: {
+    color: Colors.text,
+    fontSize: 15,
+    fontWeight: 'bold',
+  },
+  travelSubtitle: {
+    color: Colors.textMuted,
+    fontSize: 12,
+    marginTop: 2,
+  },
   textArea: {
     height: 100,
     paddingTop: 14,
@@ -295,7 +395,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 28,
+    marginBottom: 24,
   },
   interestChip: {
     backgroundColor: Colors.surface,
@@ -309,6 +409,10 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     borderColor: Colors.primary,
   },
+  musicChipSelected: {
+    backgroundColor: Colors.secondary,
+    borderColor: Colors.secondary,
+  },
   interestChipText: {
     color: Colors.textMuted,
     fontSize: 13,
@@ -317,12 +421,17 @@ const styles = StyleSheet.create({
   interestChipTextSelected: {
     color: '#FFF',
   },
+  musicChipTextSelected: {
+    color: '#0F0E17',
+    fontWeight: 'bold',
+  },
   saveButton: {
     backgroundColor: Colors.primary,
     height: 56,
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 8,
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,

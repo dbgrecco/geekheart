@@ -23,6 +23,15 @@ model User {
   bio                String?
   image              String?
   interests          String[]      @default([])
+  latitude           Float?
+  longitude          Float?
+  locationName       String?
+  isTravelMode       Boolean       @default(false)
+  travelLocationName String?
+  travelLatitude     Float?
+  travelLongitude    Float?
+  musicGenres        String[]      @default([])
+  favoriteBands      String[]      @default([])
   isOnline           Boolean       @default(false)
   lastSeen           DateTime      @default(now())
   pushToken          String?       @unique
