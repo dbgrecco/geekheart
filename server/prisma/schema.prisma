@@ -1,12 +1,12 @@
+
 // This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// learn more about it in the docs: https://pris.lyd/prisma-schema
 
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -15,10 +15,52 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                 String        @id @default(uuid())
+  email              String        @unique
+  password           String
+  name               String
+  age                Int?
+  bio                String?
+  image              String?
+  interests          String[]      @default([])
+  isOnline           Boolean       @default(false)
+  lastSeen           DateTime      @default(now())
+  pushToken          String?       @unique
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  interactions       Interaction[] @relation("user")
+  interactionsTarget Interaction[] @relation("targetUser")
+  matches            Match[]       @relation("matches")
+  sentMessages       Message[]     @relation("sender")
 }
+
+model Interaction {
+  id           String   @id @default(uuid())
+  liked        Boolean
+  createdAt    DateTime @default(now())
+  user         User     @relation("user", fields: [userId], references: [id])
+  userId       String
+  targetUser   User     @relation("targetUser", fields: [targetUserId], references: [id])
+  targetUserId String
+
+  @@unique([userId, targetUserId])
+}
+
+model Match {
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now())
+  users     User[]    @relation("matches")
+  messages  Message[]
+}
+
+model Message {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  text      String
+  isRead    Boolean  @default(false)
+  sender    User     @relation("sender", fields: [senderId], references: [id])
+  senderId  String
+  match     Match    @relation(fields: [matchId], references: [id])
+  matchId   String
+}
+

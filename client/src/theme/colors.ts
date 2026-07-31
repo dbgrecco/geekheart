@@ -1,0 +1,32 @@
+export const Colors = {
+  background: '#0F0E17',
+  surface: '#1A1829',
+  surfaceLight: '#242138',
+  primary: '#FF2A85',
+  primaryGlow: 'rgba(255, 42, 133, 0.35)',
+  secondary: '#00F0FF',
+  secondaryGlow: 'rgba(0, 240, 255, 0.35)',
+  accent: '#7000FF',
+  text: '#FFFFF0',
+  textMuted: '#A7A9BE',
+  border: '#2E2B45',
+  success: '#00E676',
+  danger: '#FF1744',
+  warning: '#FFC107',
+  overlay: 'rgba(15, 14, 23, 0.85)',
+};
+
+export const GEEK_INTERESTS = [
+  '🎮 PC Gaming',
+  '🕹️ Console / Retro',
+  '🎌 Anime & Mangá',
+  '🐉 D&D / RPG',
+  '🧩 Board Games',
+  ' Cosplay',
+  '💻 Tech & Coding',
+  '🎬 Marvel / DC',
+  '⚔️ Fantasy / Sci-Fi',
+  '🤖 IA & Robotics',
+  '🎧 eSports',
+  '📚 HQs & Books',
+];
